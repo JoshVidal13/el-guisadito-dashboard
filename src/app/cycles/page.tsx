@@ -75,12 +75,12 @@ export default function CyclesPage() {
   const balance = totalIngresos - totalEgresos;
 
   // Agrupar por categoría en base a los registros de la semana activa
-  const ingresosPorCategoria = CATEGORIAS_INGRESO.map(cat => ({
+  const ingresosPorCategoria = categoriasIngreso.map(cat => ({
     name: cat,
     total: weekRecords.filter(r => r.type === "ingreso" && r.category === cat).reduce((acc, curr) => acc + curr.amount, 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
 
-  const egresosPorCategoria = CATEGORIAS_EGRESO.map(cat => ({
+  const egresosPorCategoria = categoriasEgreso.map(cat => ({
     name: cat,
     total: weekRecords.filter(r => r.type === "egreso" && r.category === cat).reduce((acc, curr) => acc + curr.amount, 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
