@@ -65,7 +65,7 @@ export default function CyclesPage() {
   // Form state
   const [formType, setFormType] = useState<"ingreso" | "egreso">("ingreso");
   const [formAmount, setFormAmount] = useState("");
-  const [formCategory, setFormCategory] = useState(CATEGORIAS_INGRESO[0]);
+  const [formCategory, setFormCategory] = useState(DEFAULT_INGRESO[0]);
 
   // Filtrar registros SOLO para la semana activa
   const weekRecords = records.filter(r => r.date >= activeWeek.start && r.date <= activeWeek.end);
