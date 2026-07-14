@@ -111,13 +111,11 @@ export default function CalendarPage() {
     
     // selectedDateStr is "DD/MM/YYYY"
     const [d, m, y] = selectedDateStr.split("/");
-    const parsedDate = new Date(`${y}-${m}-${d}T12:00:00Z`);
-
     const newRec = {
       type: formType,
       amount: Number(formAmount),
       category: formCategory,
-      date: parsedDate
+      dateStr: `${y}-${m}-${d}`
     };
 
     toast("Guardando registro...", "info");
