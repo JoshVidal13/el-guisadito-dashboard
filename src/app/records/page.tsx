@@ -4,22 +4,17 @@ import { useState, useEffect } from "react";
 import { Edit2, Trash2, Filter, Download, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { getRecords, addRecord, updateRecord, deleteRecord } from "@/actions/finance";
 
 type FinanceRecord = {
-  id: number;
+  id: string;
   date: string;
   type: "ingreso" | "egreso";
   amount: number;
   category: string;
 };
 
-const defaultRecords: FinanceRecord[] = [
-  { id: 1, date: "13/07/2026", type: "ingreso", amount: 4500, category: "Ventas Matutinas" },
-  { id: 2, date: "13/07/2026", type: "ingreso", amount: 6200, category: "Ventas Nocturnas" },
-  { id: 3, date: "14/07/2026", type: "ingreso", amount: 3200, category: "Ventas Vespertinas" },
-  { id: 5, date: "20/07/2026", type: "egreso", amount: 1200, category: "Gas" },
-  { id: 6, date: "21/07/2026", type: "egreso", amount: 4500, category: "Insumos (Carne/Verdura)" },
-];
+// Remove default records
 
 export default function RecordsPage() {
   const [filter, setFilter] = useState<"all" | "ingreso" | "egreso">("all");
@@ -28,23 +23,15 @@ export default function RecordsPage() {
   const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
   const toast = useToast();
 
-  // Cargar de LocalStorage (Simulador de Base de Datos temporal)
+  // Cargar desde Base de Datos
   useEffect(() => {
-    const saved = localStorage.getItem("elguisadito_records");
-    if (saved) {
-      setRecords(JSON.parse(saved));
-    } else {
-      setRecords(defaultRecords);
+    async function loadData() {
+      const data = await getRecords();
+      setRecords(data);
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
+    loadData();
   }, []);
-
-  // Guardar en LocalStorage cada vez que haya cambios
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("elguisadito_records", JSON.stringify(records));
-    }
-  }, [records, isLoaded]);
 
   if (!isLoaded) return null; // Evitar hidratación incorrecta
 
@@ -64,19 +51,38 @@ export default function RecordsPage() {
     return new Date(`${y1}-${m1}-${d1}`).getTime() - new Date(`${y2}-${m2}-${d2}`).getTime();
   });
 
-  const deleteRecord = (id: number) => {
+  const handleDelete = async (id: string) => {
     if(confirm("¿Estás seguro de eliminar este registro?")) {
+      // Optimistic update
       setRecords(records.filter(r => r.id !== id));
       toast("Registro eliminado exitosamente", "info");
+      
+      const res = await deleteRecord(id);
+      if (!res.success) toast("Error al eliminar en DB", "error");
     }
   };
 
-  const handleEditSave = (e: React.FormEvent) => {
+  const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRecord) return;
+    
+    // Optimistic update
     setRecords(records.map(r => r.id === editingRecord.id ? editingRecord : r));
+    const recordToSave = { ...editingRecord };
     setEditingRecord(null);
-    toast("Registro actualizado correctamente");
+    toast("Registro actualizado localmente, guardando...");
+
+    const res = await updateRecord(recordToSave.id, {
+      amount: recordToSave.amount,
+      category: recordToSave.category,
+      dateStr: recordToSave.date
+    });
+    
+    if (res.success) {
+      toast("¡Guardado en la Base de Datos!");
+    } else {
+      toast("Error al guardar en BD", "error");
+    }
   };
 
   return (
@@ -159,7 +165,7 @@ export default function RecordsPage() {
                               <Edit2 size={18} />
                             </button>
                             <button 
-                              onClick={() => deleteRecord(rec.id)}
+                              onClick={() => handleDelete(rec.id)}
                               className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors" title="Eliminar"
                             >
                               <Trash2 size={18} />
