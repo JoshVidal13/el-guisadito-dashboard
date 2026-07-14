@@ -22,6 +22,8 @@ export default function RecordsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [categoriasIngreso, setCategoriasIngreso] = useState(["Ventas Matutinas", "Ventas Vespertinas", "Ventas Nocturnas", "Eventos", "Otro"]);
+  const [categoriasEgreso, setCategoriasEgreso] = useState(["Insumos (Carne/Verdura)", "Gas", "Agua", "Nómina", "Mantenimiento", "Proveedores", "Otro"]);
   const [newRecordForm, setNewRecordForm] = useState({
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     type: "ingreso" as "ingreso" | "egreso",
@@ -35,6 +37,13 @@ export default function RecordsPage() {
     async function loadData() {
       const data = await getRecords();
       setRecords(data);
+      
+      const savedIngresos = localStorage.getItem("elguisadito_ingresos");
+      if (savedIngresos) setCategoriasIngreso(JSON.parse(savedIngresos));
+
+      const savedEgresos = localStorage.getItem("elguisadito_egresos");
+      if (savedEgresos) setCategoriasEgreso(JSON.parse(savedEgresos));
+
       setIsLoaded(true);
     }
     loadData();
@@ -347,21 +356,11 @@ export default function RecordsPage() {
       </Modal>
 
       <datalist id="categorias-ingreso">
-        <option value="Ventas Matutinas" />
-        <option value="Ventas Vespertinas" />
-        <option value="Ventas Nocturnas" />
-        <option value="Eventos" />
-        <option value="Otro" />
+        {categoriasIngreso.map(cat => <option key={cat} value={cat} />)}
       </datalist>
 
       <datalist id="categorias-egreso">
-        <option value="Insumos (Carne/Verdura)" />
-        <option value="Gas" />
-        <option value="Agua" />
-        <option value="Nómina" />
-        <option value="Mantenimiento" />
-        <option value="Proveedores" />
-        <option value="Otro" />
+        {categoriasEgreso.map(cat => <option key={cat} value={cat} />)}
       </datalist>
     </div>
   );

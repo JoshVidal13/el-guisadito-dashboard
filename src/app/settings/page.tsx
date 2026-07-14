@@ -31,6 +31,13 @@ export default function SettingsPage() {
     const savedTheme = localStorage.getItem("elguisadito_theme") || "nocturno";
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(savedTheme);
+
+    const savedIngresos = localStorage.getItem("elguisadito_ingresos");
+    if (savedIngresos) setIngresos(JSON.parse(savedIngresos));
+
+    const savedEgresos = localStorage.getItem("elguisadito_egresos");
+    if (savedEgresos) setEgresos(JSON.parse(savedEgresos));
+
     setIsLoaded(true);
   }, []);
 
@@ -42,18 +49,22 @@ export default function SettingsPage() {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const addItem = (e: React.FormEvent, setter: any, current: string[], value: string, resetValue: any, itemType: string) => {
+  const addItem = (e: React.FormEvent, setter: any, current: string[], value: string, resetValue: any, itemType: string, storageKey?: string) => {
     e.preventDefault();
     if(value.trim()) {
-      setter([...current, value.trim()]);
+      const newList = [...current, value.trim()];
+      setter(newList);
+      if (storageKey) localStorage.setItem(storageKey, JSON.stringify(newList));
       resetValue("");
       toast(`${itemType} agregado exitosamente`);
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const removeItem = (setter: any, current: string[], index: number, itemType: string) => {
-    setter(current.filter((_, i) => i !== index));
+  const removeItem = (setter: any, current: string[], index: number, itemType: string, storageKey?: string) => {
+    const newList = current.filter((_, i) => i !== index);
+    setter(newList);
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(newList));
     toast(`${itemType} eliminado`, "error");
   };
 
@@ -158,7 +169,7 @@ export default function SettingsPage() {
                 {/* Ingresos */}
                 <div>
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><ArrowUpCircle size={20} className="text-blue-500"/> Ingresos</h3>
-                  <form onSubmit={(e) => addItem(e, setIngresos, ingresos, newIngreso, setNewIngreso, "Categoría")} className="flex gap-2 mb-4">
+                  <form onSubmit={(e) => addItem(e, setIngresos, ingresos, newIngreso, setNewIngreso, "Categoría", "elguisadito_ingresos")} className="flex gap-2 mb-4">
                     <input type="text" value={newIngreso} onChange={(e) => setNewIngreso(e.target.value)} placeholder="Nueva categoría..." className="flex-1 bg-transparent border border-brand-border rounded-lg p-2 focus:border-brand-primary outline-none" />
                     <button type="submit" className="p-2 bg-brand-primary text-brand-bg rounded-lg"><Plus size={20} /></button>
                   </form>
@@ -166,7 +177,7 @@ export default function SettingsPage() {
                     {ingresos.map((item, i) => (
                       <div key={i} className="flex justify-between p-3 rounded-lg border border-brand-border/50 hover:border-blue-500/50 group">
                         <span>{item}</span>
-                        <button onClick={() => removeItem(setIngresos, ingresos, i, "Categoría")} className="opacity-0 group-hover:opacity-100 text-rose-500"><Trash2 size={18} /></button>
+                        <button onClick={() => removeItem(setIngresos, ingresos, i, "Categoría", "elguisadito_ingresos")} className="opacity-0 group-hover:opacity-100 text-rose-500"><Trash2 size={18} /></button>
                       </div>
                     ))}
                   </div>
@@ -175,7 +186,7 @@ export default function SettingsPage() {
                 {/* Egresos */}
                 <div>
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><ArrowDownCircle size={20} className="text-rose-500"/> Gastos Operativos</h3>
-                  <form onSubmit={(e) => addItem(e, setEgresos, egresos, newEgreso, setNewEgreso, "Categoría")} className="flex gap-2 mb-4">
+                  <form onSubmit={(e) => addItem(e, setEgresos, egresos, newEgreso, setNewEgreso, "Categoría", "elguisadito_egresos")} className="flex gap-2 mb-4">
                     <input type="text" value={newEgreso} onChange={(e) => setNewEgreso(e.target.value)} placeholder="Nueva categoría..." className="flex-1 bg-transparent border border-brand-border rounded-lg p-2 focus:border-brand-primary outline-none" />
                     <button type="submit" className="p-2 bg-brand-primary text-brand-bg rounded-lg"><Plus size={20} /></button>
                   </form>
@@ -183,7 +194,7 @@ export default function SettingsPage() {
                     {egresos.map((item, i) => (
                       <div key={i} className="flex justify-between p-3 rounded-lg border border-brand-border/50 hover:border-rose-500/50 group">
                         <span>{item}</span>
-                        <button onClick={() => removeItem(setEgresos, egresos, i, "Categoría")} className="opacity-0 group-hover:opacity-100 text-rose-500"><Trash2 size={18} /></button>
+                        <button onClick={() => removeItem(setEgresos, egresos, i, "Categoría", "elguisadito_egresos")} className="opacity-0 group-hover:opacity-100 text-rose-500"><Trash2 size={18} /></button>
                       </div>
                     ))}
                   </div>

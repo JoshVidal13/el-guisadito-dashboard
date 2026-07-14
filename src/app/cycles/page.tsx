@@ -14,8 +14,8 @@ type FinanceRecord = {
   category: string;
 };
 
-const CATEGORIAS_INGRESO = ["Ventas Matutinas", "Ventas Vespertinas", "Ventas Nocturnas", "Eventos/Catering", "Otros"];
-const CATEGORIAS_EGRESO = ["Insumos (Carne/Verdura)", "Gas", "Agua", "Pagas (Nómina)", "Inversión/Mobiliario", "Otros"];
+const DEFAULT_INGRESO = ["Ventas Matutinas", "Ventas Vespertinas", "Ventas Nocturnas", "Eventos/Catering", "Otros"];
+const DEFAULT_EGRESO = ["Insumos (Carne/Verdura)", "Gas", "Agua", "Pagas (Nómina)", "Inversión/Mobiliario", "Otros"];
 
 const WEEKS = [
   { id: 1, title: "Semana 1 (Trabajo)", start: 13, end: 19, month: "Julio" },
@@ -31,8 +31,10 @@ export default function CyclesPage() {
   const weekDays = Array.from({ length: 7 }, (_, i) => activeWeek.start + i);
   const weekDayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-  // Datos Reales
   const [records, setRecords] = useState<FinanceRecord[]>([]);
+
+  const [categoriasIngreso, setCategoriasIngreso] = useState(DEFAULT_INGRESO);
+  const [categoriasEgreso, setCategoriasEgreso] = useState(DEFAULT_EGRESO);
 
   useEffect(() => {
     async function load() {
@@ -47,6 +49,12 @@ export default function CyclesPage() {
         category: r.category
       }));
       setRecords(mapped);
+
+      const savedIngresos = localStorage.getItem("elguisadito_ingresos");
+      if (savedIngresos) setCategoriasIngreso(JSON.parse(savedIngresos));
+
+      const savedEgresos = localStorage.getItem("elguisadito_egresos");
+      if (savedEgresos) setCategoriasEgreso(JSON.parse(savedEgresos));
     }
     load();
   }, []);
@@ -112,10 +120,12 @@ export default function CyclesPage() {
     }
   };
 
-  const openModalForDate = (day: number) => {
-    setSelectedDate(day);
+  const openModalForDate = (date: number) => {
+    setSelectedDate(date);
+    setFormType("ingreso");
+    setFormCategory(categoriasIngreso[0]);
+    setFormAmount("");
     setIsModalOpen(true);
-    setFormCategory(formType === "ingreso" ? CATEGORIAS_INGRESO[0] : CATEGORIAS_EGRESO[0]);
   };
 
   return (
@@ -293,14 +303,14 @@ export default function CyclesPage() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => { setFormType("ingreso"); setFormCategory(CATEGORIAS_INGRESO[0]); }}
+              onClick={() => { setFormType("ingreso"); setFormCategory(categoriasIngreso[0]); }}
               className={`flex-1 py-3 rounded-xl font-bold transition-all ${formType === "ingreso" ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" : "bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700"}`}
             >
               + Ingreso
             </button>
             <button
               type="button"
-              onClick={() => { setFormType("egreso"); setFormCategory(CATEGORIAS_EGRESO[0]); }}
+              onClick={() => { setFormType("egreso"); setFormCategory(categoriasEgreso[0]); }}
               className={`flex-1 py-3 rounded-xl font-bold transition-all ${formType === "egreso" ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "bg-slate-800/50 text-slate-400 border border-slate-700 hover:bg-slate-700"}`}
             >
               - Egreso
@@ -315,7 +325,7 @@ export default function CyclesPage() {
               onChange={(e) => setFormCategory(e.target.value)}
               className="w-full bg-slate-900 border border-brand-border rounded-lg p-3 text-white focus:outline-none focus:border-brand-primary transition-colors appearance-none cursor-pointer"
             >
-              {(formType === "ingreso" ? CATEGORIAS_INGRESO : CATEGORIAS_EGRESO).map(cat => (
+              {(formType === "ingreso" ? categoriasIngreso : categoriasEgreso).map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
