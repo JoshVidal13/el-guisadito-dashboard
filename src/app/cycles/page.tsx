@@ -39,7 +39,7 @@ export default function CyclesPage() {
     async function load() {
       const data = await getRecords();
       // Map "DD/MM/YYYY" to day number for the calendar
-      const mapped = data.map(r => ({
+      const mapped = data.map((r: any) => ({
         id: r.id,
         date: parseInt(r.date.split('/')[0], 10),
         type: r.type,

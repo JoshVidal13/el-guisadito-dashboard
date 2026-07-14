@@ -25,7 +25,7 @@ export async function getRecords() {
     });
     
     // Mapear al formato del frontend
-    return records.map(r => {
+    return records.map((r: any) => {
       // Parse dates to DD/MM/YYYY format assuming UTC to avoid timezone shifts
       const day = String(r.date.getUTCDate()).padStart(2, '0');
       const month = String(r.date.getUTCMonth() + 1).padStart(2, '0');
