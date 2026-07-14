@@ -121,8 +121,9 @@ export default function CalendarPage() {
     toast("Guardando registro...", "info");
     const res = await addRecord(newRec);
 
-    if (res.success && res.data) {
-      setRecords([res.data, ...records]);
+    if (res.success) {
+      const data = await getRecords();
+      setRecords(data);
       setIsModalOpen(false);
       setFormAmount("");
       toast("Registro añadido exitosamente");
