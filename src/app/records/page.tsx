@@ -263,6 +263,7 @@ export default function RecordsPage() {
               <label className="block text-sm font-medium text-slate-400 mb-1">Categoría</label>
               <input 
                 type="text"
+                list={editingRecord.type === 'ingreso' ? "categorias-ingreso" : "categorias-egreso"}
                 value={editingRecord.category}
                 onChange={e => setEditingRecord({...editingRecord, category: e.target.value})}
                 className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-primary"
@@ -331,6 +332,7 @@ export default function RecordsPage() {
             <label className="block text-sm font-medium text-slate-400 mb-1">Categoría/Concepto</label>
             <input 
               type="text"
+              list={newRecordForm.type === 'ingreso' ? "categorias-ingreso" : "categorias-egreso"}
               value={newRecordForm.category}
               onChange={e => setNewRecordForm({...newRecordForm, category: e.target.value})}
               required
@@ -343,6 +345,24 @@ export default function RecordsPage() {
           </button>
         </form>
       </Modal>
+
+      <datalist id="categorias-ingreso">
+        <option value="Ventas Matutinas" />
+        <option value="Ventas Vespertinas" />
+        <option value="Ventas Nocturnas" />
+        <option value="Eventos" />
+        <option value="Otro" />
+      </datalist>
+
+      <datalist id="categorias-egreso">
+        <option value="Insumos (Carne/Verdura)" />
+        <option value="Gas" />
+        <option value="Agua" />
+        <option value="Nómina" />
+        <option value="Mantenimiento" />
+        <option value="Proveedores" />
+        <option value="Otro" />
+      </datalist>
     </div>
   );
 }
