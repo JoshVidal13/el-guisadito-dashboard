@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Tag, Palette, Users, Truck, Calendar, Trash2, Plus, CheckCircle2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { Settings, Tag, Palette, Users, Truck, Calendar, Trash2, Plus, CheckCircle2, ArrowUpCircle, ArrowDownCircle, Target } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 type TabType = "temas" | "finanzas" | "personal" | "operacion";
@@ -20,6 +20,9 @@ export default function SettingsPage() {
   const [proveedores, setProveedores] = useState(["Coca-Cola", "Carnicería La Fina", "Bimbo"]);
   const [eventos, setEventos] = useState(["Visita Proveedor", "Mantenimiento", "Evento Privado"]);
 
+  // Meta Mensual
+  const [metaMensual, setMetaMensual] = useState<string>("50000");
+
   // Estados para inputs temporales
   const [newIngreso, setNewIngreso] = useState("");
   const [newEgreso, setNewEgreso] = useState("");
@@ -37,6 +40,9 @@ export default function SettingsPage() {
 
     const savedEgresos = localStorage.getItem("elguisadito_egresos");
     if (savedEgresos) setEgresos(JSON.parse(savedEgresos));
+
+    const savedMeta = localStorage.getItem("elguisadito_meta");
+    if (savedMeta) setMetaMensual(savedMeta);
 
     setIsLoaded(true);
   }, []);
@@ -160,11 +166,37 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* TAB: FINANZAS */}
           {activeTab === "finanzas" && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <h2 className="text-2xl font-bold border-b border-brand-border pb-4">Categorías Financieras</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <h2 className="text-2xl font-bold border-b border-brand-border pb-4">Gestión Financiera</h2>
+              
+              {/* Meta Mensual */}
+              <div className="bg-slate-900/50 p-6 rounded-xl border border-brand-border">
+                <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Target size={20} className="text-emerald-500"/> Meta Mensual de Ingresos</h3>
+                <p className="text-sm text-slate-400 mb-4">Establece tu objetivo de ventas para habilitar la barra de progreso en el Análisis Mensual.</p>
+                <div className="flex gap-4 max-w-sm">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <input 
+                      type="number" 
+                      value={metaMensual} 
+                      onChange={(e) => setMetaMensual(e.target.value)} 
+                      className="w-full bg-transparent border border-brand-border rounded-lg py-2 pl-8 pr-3 focus:border-brand-primary outline-none text-white font-bold" 
+                    />
+                  </div>
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem("elguisadito_meta", metaMensual);
+                      toast("Meta mensual guardada");
+                    }}
+                    className="px-4 py-2 bg-brand-primary hover:bg-brand-primary-hover text-brand-bg font-bold rounded-lg transition-colors"
+                  >
+                    Guardar Meta
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
                 
                 {/* Ingresos */}
                 <div>
