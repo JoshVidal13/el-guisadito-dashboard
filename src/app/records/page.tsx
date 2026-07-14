@@ -5,7 +5,7 @@ import { Edit2, Trash2, Filter, Download, ArrowUpCircle, ArrowDownCircle, Calend
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 
-type Record = {
+type FinanceRecord = {
   id: number;
   date: string;
   type: "ingreso" | "egreso";
@@ -13,7 +13,7 @@ type Record = {
   category: string;
 };
 
-const defaultRecords: Record[] = [
+const defaultRecords: FinanceRecord[] = [
   { id: 1, date: "13/07/2026", type: "ingreso", amount: 4500, category: "Ventas Matutinas" },
   { id: 2, date: "13/07/2026", type: "ingreso", amount: 6200, category: "Ventas Nocturnas" },
   { id: 3, date: "14/07/2026", type: "ingreso", amount: 3200, category: "Ventas Vespertinas" },
@@ -23,9 +23,9 @@ const defaultRecords: Record[] = [
 
 export default function RecordsPage() {
   const [filter, setFilter] = useState<"all" | "ingreso" | "egreso">("all");
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<FinanceRecord[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<Record | null>(null);
+  const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
   const toast = useToast();
 
   // Cargar de LocalStorage (Simulador de Base de Datos temporal)
@@ -55,7 +55,7 @@ export default function RecordsPage() {
     if (!acc[record.date]) acc[record.date] = [];
     acc[record.date].push(record);
     return acc;
-  }, {} as Record<string, Record[]>);
+  }, {} as Record<string, FinanceRecord[]>);
 
   // Ordenar fechas (asumiendo formato DD/MM/YYYY)
   const sortedDates = Object.keys(groupedRecords).sort((a, b) => {
