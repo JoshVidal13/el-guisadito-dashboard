@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Edit2, Trash2, Filter, Download, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { getRecords, updateRecord, deleteRecord } from "@/actions/finance";
+import { getRecords, addRecord, updateRecord, deleteRecord } from "@/actions/finance";
 
 type FinanceRecord = {
   id: string;
@@ -21,6 +21,14 @@ export default function RecordsPage() {
   const [records, setRecords] = useState<FinanceRecord[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [newRecordForm, setNewRecordForm] = useState({
+    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+    type: "ingreso" as "ingreso" | "egreso",
+    amount: "",
+    category: ""
+  });
   const toast = useToast();
 
   // Cargar desde Base de Datos
@@ -79,9 +87,52 @@ export default function RecordsPage() {
     });
     
     if (res.success) {
+    if (res.success) {
       toast("¡Guardado en la Base de Datos!");
     } else {
       toast("Error al guardar en BD", "error");
+    }
+  };
+
+  const handleNewRecordSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRecordForm.amount || !newRecordForm.category || !newRecordForm.date) return;
+
+    // Convert YYYY-MM-DD to DD/MM/YYYY
+    const [y, m, d] = newRecordForm.date.split('-');
+    const dateStr = `${d}/${m}/${y}`;
+
+    // Optimistic Update
+    const tempId = Date.now().toString();
+    const optimisticRecord = {
+      id: tempId,
+      date: dateStr,
+      type: newRecordForm.type,
+      amount: parseFloat(newRecordForm.amount),
+      category: newRecordForm.category
+    };
+    
+    setRecords([...records, optimisticRecord]);
+    setIsNewModalOpen(false);
+    setNewRecordForm({
+      date: new Date().toISOString().split('T')[0],
+      type: "ingreso",
+      amount: "",
+      category: ""
+    });
+    toast("Guardando nuevo registro...", "info");
+
+    const res = await addRecord({
+      amount: optimisticRecord.amount,
+      type: optimisticRecord.type,
+      category: optimisticRecord.category,
+      dateStr: optimisticRecord.date
+    });
+
+    if (res.success) {
+      toast("Registro agregado a la base de datos");
+    } else {
+      toast("Error al agregar a la base de datos", "error");
     }
   };
 
@@ -93,6 +144,13 @@ export default function RecordsPage() {
           <p className="text-slate-400 mt-1">Tus movimientos financieros, agrupados por día.</p>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsNewModalOpen(true)}
+            className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary-hover text-brand-bg px-4 py-2 rounded-lg font-bold transition-colors"
+          >
+            <ArrowUpCircle size={20} />
+            Nuevo
+          </button>
           <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors border border-brand-border">
             <Download size={20} />
             Exportar CSV
@@ -186,7 +244,7 @@ export default function RecordsPage() {
         {editingRecord && (
           <form onSubmit={handleEditSave} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Fecha</label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Fecha (DD/MM/YYYY)</label>
               <input 
                 type="text"
                 value={editingRecord.date}
@@ -217,6 +275,75 @@ export default function RecordsPage() {
             </button>
           </form>
         )}
+      </Modal>
+
+      <Modal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} title="Agregar Registro Manual">
+        <form onSubmit={handleNewRecordSave} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Fecha</label>
+            <input 
+              type="date"
+              value={newRecordForm.date}
+              onChange={e => setNewRecordForm({...newRecordForm, date: e.target.value})}
+              required
+              className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Tipo</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setNewRecordForm({...newRecordForm, type: "ingreso"})}
+                className={`flex-1 py-2 rounded-lg font-semibold flex justify-center items-center gap-2 transition-all ${
+                  newRecordForm.type === "ingreso" 
+                    ? "bg-brand-primary text-brand-bg" 
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                }`}
+              >
+                Ingreso
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewRecordForm({...newRecordForm, type: "egreso"})}
+                className={`flex-1 py-2 rounded-lg font-semibold flex justify-center items-center gap-2 transition-all ${
+                  newRecordForm.type === "egreso" 
+                    ? "bg-rose-500 text-white" 
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                }`}
+              >
+                Egreso
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Monto ($)</label>
+            <input 
+              type="number"
+              value={newRecordForm.amount}
+              onChange={e => setNewRecordForm({...newRecordForm, amount: e.target.value})}
+              required
+              min="0"
+              step="0.01"
+              placeholder="Ej. 1500"
+              className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Categoría/Concepto</label>
+            <input 
+              type="text"
+              value={newRecordForm.category}
+              onChange={e => setNewRecordForm({...newRecordForm, category: e.target.value})}
+              required
+              placeholder="Ej. Ventas Matutinas"
+              className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-primary"
+            />
+          </div>
+          <button type="submit" className="w-full py-2.5 rounded-lg bg-brand-primary hover:bg-brand-primary-hover text-brand-bg font-semibold mt-4">
+            Añadir a la Base de Datos
+          </button>
+        </form>
       </Modal>
     </div>
   );
