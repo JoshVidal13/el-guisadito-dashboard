@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart, Calendar as CalendarIcon, Star, Target, BarChart2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { getRecords, addRecord } from "@/actions/finance";
@@ -84,6 +84,22 @@ export default function CyclesPage() {
     name: cat,
     total: weekRecords.filter(r => r.type === "egreso" && r.category === cat).reduce((acc, curr) => acc + curr.amount, 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+
+  // Insights Rápidos
+  const dailyIncome = weekRecords.filter(r => r.type === "ingreso").reduce((acc, curr) => {
+    acc[curr.date] = (acc[curr.date] || 0) + curr.amount;
+    return acc;
+  }, {} as Record<number, number>);
+  
+  let bestDay = { date: "N/A", amount: 0 };
+  Object.entries(dailyIncome).forEach(([date, amount]) => {
+    if (amount > bestDay.amount) bestDay = { date: `${date} ${activeWeek.month}`, amount };
+  });
+
+  let biggestExpense = { category: "N/A", amount: 0 };
+  if (egresosPorCategoria.length > 0) {
+    biggestExpense = { category: egresosPorCategoria[0].name, amount: egresosPorCategoria[0].total };
+  }
 
   const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,10 +268,26 @@ export default function CyclesPage() {
             <PieChart className="text-brand-primary" size={24} />
             <h2 className="text-xl font-bold text-white">Análisis de la Semana</h2>
           </div>
+          
+          <div className="bg-slate-900/50 p-4 rounded-xl border border-brand-border space-y-4">
+            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><Star size={16} className="text-yellow-500"/> Insights</h3>
+            <div>
+              <p className="text-xs text-slate-400">Mejor Día de Ventas</p>
+              <p className="font-semibold text-emerald-400">{bestDay.date !== "N/A" ? `${bestDay.date} ($${bestDay.amount.toLocaleString()})` : "Sin datos"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Mayor Gasto (Categoría)</p>
+              <p className="font-semibold text-rose-400">{biggestExpense.category !== "N/A" ? `${biggestExpense.category} ($${biggestExpense.amount.toLocaleString()})` : "Sin datos"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Transacciones Totales</p>
+              <p className="font-semibold text-blue-400">{weekRecords.length} movimientos</p>
+            </div>
+          </div>
 
           {ingresosPorCategoria.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4">Ingresos</h3>
+              <h3 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Target size={16}/> Distribución de Ingresos</h3>
               <div className="space-y-4">
                 {ingresosPorCategoria.map(cat => (
                   <div key={cat.name}>
@@ -274,7 +306,7 @@ export default function CyclesPage() {
 
           {egresosPorCategoria.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-4">Gastos</h3>
+              <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-4 flex items-center gap-2"><BarChart2 size={16}/> Distribución de Gastos</h3>
               <div className="space-y-4">
                 {egresosPorCategoria.map(cat => (
                   <div key={cat.name}>

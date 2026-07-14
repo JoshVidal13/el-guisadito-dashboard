@@ -251,11 +251,14 @@ export default function RecordsPage() {
         {editingRecord && (
           <form onSubmit={handleEditSave} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Fecha (DD/MM/YYYY)</label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Fecha</label>
               <input 
-                type="text"
-                value={editingRecord.date}
-                onChange={e => setEditingRecord({...editingRecord, date: e.target.value})}
+                type="date"
+                value={editingRecord.date.split('/').reverse().join('-')}
+                onChange={e => {
+                  const [y, m, d] = e.target.value.split('-');
+                  if (y && m && d) setEditingRecord({...editingRecord, date: `${d}/${m}/${y}`});
+                }}
                 className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-primary"
               />
             </div>
