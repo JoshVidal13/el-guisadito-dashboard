@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart, Calendar as CalendarIcon } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { getRecords, addRecord } from "@/actions/finance";
 
-type Record = {
-  id: number;
-  date: number; // For simplicity in mock, just day of July 2026
+type FinanceRecord = {
+  id: string;
+  date: number; // Day of month extracted from server response
   type: "ingreso" | "egreso";
   amount: number;
   category: string;
@@ -30,17 +31,26 @@ export default function CyclesPage() {
   const weekDays = Array.from({ length: 7 }, (_, i) => activeWeek.start + i);
   const weekDayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-  // Datos simulados
-  const [records, setRecords] = useState<Record[]>([
-    { id: 1, date: 13, type: "ingreso", amount: 4500, category: "Ventas Matutinas" },
-    { id: 2, date: 13, type: "ingreso", amount: 6200, category: "Ventas Nocturnas" },
-    { id: 3, date: 14, type: "ingreso", amount: 3200, category: "Ventas Vespertinas" },
-    { id: 4, date: 15, type: "ingreso", amount: 8000, category: "Ventas Nocturnas" },
-    { id: 5, date: 20, type: "egreso", amount: 1200, category: "Gas" },
-    { id: 6, date: 21, type: "egreso", amount: 4500, category: "Insumos (Carne/Verdura)" },
-    { id: 7, date: 21, type: "egreso", amount: 4000, category: "Pagas (Nómina)" },
-    { id: 8, date: 22, type: "egreso", amount: 800, category: "Agua" },
-  ]);
+  // Datos Reales
+  const [records, setRecords] = useState<FinanceRecord[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getRecords();
+      // Map "DD/MM/YYYY" to day number for the calendar
+      const mapped = data.map(r => ({
+        id: r.id,
+        date: parseInt(r.date.split('/')[0], 10),
+        type: r.type,
+        amount: r.amount,
+        category: r.category
+      }));
+      setRecords(mapped);
+      setIsLoaded(true);
+    }
+    load();
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<number>(13);
@@ -68,12 +78,17 @@ export default function CyclesPage() {
     total: weekRecords.filter(r => r.type === "egreso" && r.category === cat).reduce((acc, curr) => acc + curr.amount, 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
 
-  const handleAddRecord = (e: React.FormEvent) => {
+  const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formAmount || !formCategory) return;
     
+    const dayStr = selectedDate.toString().padStart(2, '0');
+    const dateStr = `${dayStr}/07/2026`; 
+
+    // Optimistic update
+    const tempId = Date.now().toString();
     setRecords([...records, {
-      id: Date.now(),
+      id: tempId,
       date: selectedDate,
       type: formType,
       amount: parseFloat(formAmount),
@@ -82,7 +97,20 @@ export default function CyclesPage() {
     
     setIsModalOpen(false);
     setFormAmount("");
-    toast(`Registro de $${formAmount} guardado con éxito`);
+    toast(`Guardando en el servidor...`, "info");
+
+    const res = await addRecord({
+      amount: parseFloat(formAmount),
+      type: formType,
+      category: formCategory,
+      dateStr
+    });
+
+    if (res.success) {
+      toast(`Registro guardado en BD con éxito`);
+    } else {
+      toast(`Error al guardar en BD`, "error");
+    }
   };
 
   const openModalForDate = (day: number) => {
