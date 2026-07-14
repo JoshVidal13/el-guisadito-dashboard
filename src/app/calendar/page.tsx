@@ -110,12 +110,11 @@ export default function CalendarPage() {
     if (!formAmount || isNaN(Number(formAmount))) return;
     
     // selectedDateStr is "DD/MM/YYYY"
-    const [d, m, y] = selectedDateStr.split("/");
     const newRec = {
       type: formType,
       amount: Number(formAmount),
       category: formCategory,
-      dateStr: `${y}-${m}-${d}`
+      dateStr: selectedDateStr
     };
 
     toast("Guardando registro...", "info");
