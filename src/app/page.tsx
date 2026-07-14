@@ -20,27 +20,61 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-const mockData = [
-  { name: 'Lun', ingresos: 4000, egresos: 2400 },
-  { name: 'Mar', ingresos: 3000, egresos: 1398 },
-  { name: 'Mie', ingresos: 2000, egresos: 9800 },
-  { name: 'Jue', ingresos: 2780, egresos: 3908 },
-  { name: 'Vie', ingresos: 1890, egresos: 4800 },
-  { name: 'Sab', ingresos: 2390, egresos: 3800 },
-  { name: 'Dom', ingresos: 3490, egresos: 4300 },
-];
+import { useState, useEffect } from "react";
+import { getRecords } from "@/actions/finance";
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  }).format(amount);
+};
 
 export default function Dashboard() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [records, setRecords] = useState<any[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getRecords();
+      setRecords(data);
+      setIsLoaded(true);
+    }
+    load();
+  }, []);
+
+  const totalIngresos = records.filter(r => r.type === "ingreso").reduce((sum, r) => sum + r.amount, 0);
+  const totalEgresos = records.filter(r => r.type === "egreso").reduce((sum, r) => sum + r.amount, 0);
+  const balance = totalIngresos - totalEgresos;
+
+  const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+  const chartData = days.map(day => ({ name: day, ingresos: 0, egresos: 0 }));
+
+  records.forEach(r => {
+    const [d, m, y] = r.date.split('/');
+    const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    const dayOfWeek = dateObj.getDay(); 
+    const index = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    if (r.type === "ingreso") {
+      chartData[index].ingresos += r.amount;
+    } else {
+      chartData[index].egresos += r.amount;
+    }
+  });
+
+  if (!isLoaded) return null;
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white">Dashboard Financiero</h1>
-          <p className="text-slate-400 mt-1">Resumen de la semana actual (13/07 - 19/07)</p>
+          <p className="text-slate-400 mt-1">Resumen general en tiempo real</p>
         </div>
         <div className="px-4 py-2 rounded-lg bg-brand-primary/10 border border-brand-primary/20 text-brand-primary font-medium text-sm flex items-center gap-2 w-fit">
           <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
-          Semana Activa (Ingresos)
+          Conectado a BD
         </div>
       </div>
 
@@ -50,7 +84,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-slate-400 text-sm font-medium">Balance Total</p>
-              <h3 className="text-3xl font-bold text-white mt-1">$24,500.00</h3>
+              <h3 className="text-3xl font-bold text-white mt-1">{formatCurrency(balance)}</h3>
             </div>
             <div className="p-3 bg-brand-primary/10 rounded-xl text-brand-primary">
               <DollarSign size={24} />
@@ -58,37 +92,37 @@ export default function Dashboard() {
           </div>
           <div className="text-sm flex items-center gap-1 text-emerald-400">
             <TrendingUp size={16} />
-            <span>+12.5% vs semana anterior</span>
+            <span>Al día de hoy</span>
           </div>
         </div>
 
         <div className="glass p-6 rounded-2xl flex flex-col gap-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-400 text-sm font-medium">Ingresos (Semana Activa)</p>
-              <h3 className="text-3xl font-bold text-emerald-400 mt-1">$19,550.00</h3>
+              <p className="text-slate-400 text-sm font-medium">Ingresos Totales</p>
+              <h3 className="text-3xl font-bold text-emerald-400 mt-1">{formatCurrency(totalIngresos)}</h3>
             </div>
             <div className="p-3 bg-emerald-400/10 rounded-xl text-emerald-400">
               <TrendingUp size={24} />
             </div>
           </div>
           <div className="text-sm flex items-center gap-1 text-slate-400">
-            <span>Proyección de cierre: $22,000</span>
+            <span>Todos los registros</span>
           </div>
         </div>
 
         <div className="glass p-6 rounded-2xl flex flex-col gap-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-400 text-sm font-medium">Egresos (Semana Descanso)</p>
-              <h3 className="text-3xl font-bold text-rose-400 mt-1">$8,200.00</h3>
+              <p className="text-slate-400 text-sm font-medium">Egresos Totales</p>
+              <h3 className="text-3xl font-bold text-rose-400 mt-1">{formatCurrency(totalEgresos)}</h3>
             </div>
             <div className="p-3 bg-rose-400/10 rounded-xl text-rose-400">
               <TrendingDown size={24} />
             </div>
           </div>
           <div className="text-sm flex items-center gap-1 text-slate-400">
-            <span>Insumos y Pagas pendientes</span>
+            <span>Todos los registros</span>
           </div>
         </div>
       </div>
@@ -135,7 +169,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold text-white mb-6">Flujo de Efectivo</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
