@@ -21,7 +21,6 @@ export default function RecordsPage() {
   const [records, setRecords] = useState<FinanceRecord[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
-  const [editingRecord, setEditingRecord] = useState<FinanceRecord | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newRecordForm, setNewRecordForm] = useState({
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
@@ -86,7 +85,6 @@ export default function RecordsPage() {
       dateStr: recordToSave.date
     });
     
-    if (res.success) {
     if (res.success) {
       toast("¡Guardado en la Base de Datos!");
     } else {
