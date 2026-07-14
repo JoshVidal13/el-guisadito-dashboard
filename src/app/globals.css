@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-brand-primary: var(--primary);
+  --color-brand-primary-hover: var(--primary-hover);
+  --color-brand-bg: var(--bg);
+  --color-brand-surface: var(--surface);
+  --color-brand-border: var(--border);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  /* Tema 1: Guisadito Nocturno (Por Defecto) */
+  :root, [data-theme="nocturno"] {
+    --primary: #f59e0b; /* Ambar */
+    --primary-hover: #d97706;
+    --bg: #0f172a; /* Slate 900 */
+    --surface: #1e293b; /* Slate 800 */
+    --border: #334155; /* Slate 700 */
+    --foreground: #f8fafc; /* Slate 50 */
+    --glass-bg: rgba(30, 41, 59, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Tema 2: Clásico Tradicional */
+  [data-theme="clasico"] {
+    --primary: #ea580c; /* Naranja rojizo */
+    --primary-hover: #c2410c;
+    --bg: #f8fafc; /* Slate 50 */
+    --surface: #ffffff; /* White */
+    --border: #e2e8f0; /* Slate 200 */
+    --foreground: #0f172a; /* Slate 900 */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.05);
+  }
+
+  /* Tema 3: Neón Cyberpunk */
+  [data-theme="cyberpunk"] {
+    --primary: #d946ef; /* Fuchsia 500 */
+    --primary-hover: #c026d3;
+    --bg: #170f2e; /* Very dark purple */
+    --surface: #2e1065; /* Purple 900 */
+    --border: #581c87; /* Purple 800 */
+    --foreground: #fdf4ff; /* Fuchsia 50 */
+    --glass-bg: rgba(46, 16, 101, 0.65);
+    --glass-border: rgba(217, 70, 239, 0.2);
+  }
+
+  /* Tema 4: Minimalista */
+  [data-theme="minimalista"] {
+    --primary: #0f172a; /* Slate 900 (Dark) */
+    --primary-hover: #334155;
+    --bg: #ffffff; /* Pure white */
+    --surface: #f8fafc; /* Light gray */
+    --border: #cbd5e1; /* Slate 300 */
+    --foreground: #020617; /* Slate 950 */
+    --glass-bg: rgba(248, 250, 252, 0.8);
+    --glass-border: rgba(0, 0, 0, 0.1);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--foreground);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Hack para forzar que las clases estáticas se adapten a los temas claros automáticamente */
+@layer utilities {
+  .text-white {
+    color: var(--foreground);
+  }
+  .text-slate-200, .text-slate-300 {
+    color: color-mix(in srgb, var(--foreground) 80%, transparent);
+  }
+  .text-slate-400 {
+    color: color-mix(in srgb, var(--foreground) 60%, transparent);
+  }
+  .bg-slate-900 {
+    background-color: var(--surface);
+  }
+  .bg-slate-800, .bg-slate-800\/50 {
+    background-color: color-mix(in srgb, var(--bg) 90%, transparent);
+  }
+  .border-slate-700 {
+    border-color: var(--border);
+  }
 }

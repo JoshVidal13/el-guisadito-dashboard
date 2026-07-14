@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cycle {
+  id        String   @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime
+  type      String   // "WORK" o "REST"
+  records   Record[]
+}
+
+model Record {
+  id          String   @id @default(cuid())
+  amount      Float
+  type        String   // "INCOME" o "EXPENSE"
+  category    String
+  description String?
+  date        DateTime @default(now())
+  cycleId     String
+  cycle       Cycle    @relation(fields: [cycleId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime
+  type        String   // "SUPPLIER" o "EVENT"
+  description String?
+}
+
+model Schedule {
+  id         String   @id @default(cuid())
+  employee   String
+  role       String
+  shiftStart DateTime
+  shiftEnd   DateTime
+}
