@@ -33,12 +33,12 @@ export default function CyclesPage() {
 
   // Datos Reales
   const [records, setRecords] = useState<FinanceRecord[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     async function load() {
       const data = await getRecords();
       // Map "DD/MM/YYYY" to day number for the calendar
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapped = data.map((r: any) => ({
         id: r.id,
         date: parseInt(r.date.split('/')[0], 10),
@@ -47,7 +47,6 @@ export default function CyclesPage() {
         category: r.category
       }));
       setRecords(mapped);
-      setIsLoaded(true);
     }
     load();
   }, []);

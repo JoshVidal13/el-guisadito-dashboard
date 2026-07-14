@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Edit2, Trash2, Filter, Download, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { getRecords, addRecord, updateRecord, deleteRecord } from "@/actions/finance";
+import { getRecords, updateRecord, deleteRecord } from "@/actions/finance";
 
 type FinanceRecord = {
   id: string;
@@ -106,7 +106,7 @@ export default function RecordsPage() {
             <Filter size={18} className="text-slate-400 ml-2" />
             <select 
               value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
+              onChange={(e) => setFilter(e.target.value as "all" | "ingreso" | "egreso")}
               className="bg-transparent text-white font-medium focus:outline-none cursor-pointer py-1.5 px-2 rounded"
             >
               <option value="all" className="bg-slate-900">Todos los Movimientos</option>

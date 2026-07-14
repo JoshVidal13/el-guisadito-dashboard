@@ -175,7 +175,7 @@ export default function Dashboard() {
                 <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-medium text-slate-200">Egreso: Gas Inusual</h4>
-                  <p className="text-xs text-slate-400 mt-1">El gasto en la categoría "Gas" durante el ciclo de descanso (Semana 20-26) es alto. Sugerimos cotizar alternativas.</p>
+                  <p className="text-xs text-slate-400 mt-1">El gasto en la categoría &quot;Gas&quot; durante el ciclo de descanso (Semana 20-26) es alto. Sugerimos cotizar alternativas.</p>
                 </div>
               </div>
             </div>
@@ -185,7 +185,7 @@ export default function Dashboard() {
                 <TrendingUp size={18} className="text-emerald-500 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-medium text-slate-200">Ingreso: Ventas Nocturnas</h4>
-                  <p className="text-xs text-slate-400 mt-1">La categoría "Ventas Nocturnas" generó el 60% de tus ingresos del último ciclo de trabajo. ¡Día fuerte detectado!</p>
+                  <p className="text-xs text-slate-400 mt-1">La categoría &quot;Ventas Nocturnas&quot; generó el 60% de tus ingresos del último ciclo de trabajo. ¡Día fuerte detectado!</p>
                 </div>
               </div>
             </div>
@@ -195,7 +195,7 @@ export default function Dashboard() {
                 <DollarSign size={18} className="text-brand-primary shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-medium text-slate-200">Inversión Sugerida</h4>
-                  <p className="text-xs text-slate-400 mt-1">Tienes un balance general positivo. Destinar una parte a la categoría "Inversión/Mobiliario" deducirá impuestos.</p>
+                  <p className="text-xs text-slate-400 mt-1">Tienes un balance general positivo. Destinar una parte a la categoría &quot;Inversión/Mobiliario&quot; deducirá impuestos.</p>
                 </div>
               </div>
             </div>

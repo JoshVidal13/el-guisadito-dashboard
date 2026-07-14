@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 export default function CalendarPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [currentMonth, setCurrentMonth] = useState("Julio 2026");
+  const [currentMonth] = useState("Julio 2026");
 
   const events = [
     { id: 1, date: 15, title: "Visita Coca-Cola", type: "supplier", time: "10:00 AM" },
