@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart as PieChartIcon, Calendar as CalendarIcon, Star, Target, BarChart2, Trash2 } from "lucide-react";
+import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart as PieChartIcon, Calendar as CalendarIcon, Star, Target, BarChart2, Trash2, TrendingUp } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { getRecords, addRecord, deleteRecord } from "@/actions/finance";
@@ -260,58 +260,61 @@ export default function CyclesPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-slate-800/50 rounded-xl overflow-hidden border border-brand-border">
-          {/* Headers de la semana */}
-          {weekDayNames.map((name, idx) => (
-            <div key={idx} className="hidden md:block bg-brand-bg/90 py-3 text-center text-sm font-semibold text-slate-400 tracking-wider">
-              {name}
-            </div>
-          ))}
-
-          {/* Celdas de días */}
-          {weekDays.map(day => {
+        <div className="flex flex-col gap-3">
+          {/* Celdas de días en formato lista vertical */}
+          {weekDays.map((day, idx) => {
             const dayRecords = weekRecords.filter(r => r.date === day);
             
             const dayIngresos = dayRecords.filter(r => r.type === "ingreso").reduce((a, b) => a + b.amount, 0);
             const dayEgresos = dayRecords.filter(r => r.type === "egreso").reduce((a, b) => a + b.amount, 0);
             const dayTotal = dayIngresos - dayEgresos;
             
-            const bgClass = selectedWeekId === 1 ? "bg-blue-900/10 hover:bg-blue-900/30" : "bg-rose-900/10 hover:bg-rose-900/30";
+            const bgClass = selectedWeekId === 1 ? "bg-blue-900/10 hover:bg-blue-900/30 border-blue-900/30" : "bg-rose-900/10 hover:bg-rose-900/30 border-rose-900/30";
 
             return (
               <div 
                 key={day} 
                 onClick={() => openModalForDate(day)}
-                className={`${bgClass} min-h-[220px] p-3 cursor-pointer transition-all group relative flex flex-col md:border-t-0 border-t border-brand-border/30`}
+                className={`${bgClass} rounded-xl border p-4 cursor-pointer transition-all group relative flex flex-col md:flex-row md:items-center gap-4`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-300 group-hover:bg-brand-primary group-hover:text-brand-bg group-hover:shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-colors">
+                {/* Cabecera del Día */}
+                <div className="flex items-center gap-4 md:w-48 shrink-0">
+                  <div className="text-lg font-bold w-12 h-12 flex items-center justify-center rounded-full bg-slate-800 text-slate-300 group-hover:bg-brand-primary group-hover:text-brand-bg group-hover:shadow-[0_0_15px_rgba(245,158,11,0.5)] transition-colors">
                     {day}
                   </div>
-                  <span className="md:hidden text-slate-400 font-bold uppercase">{weekDayNames[weekDays.indexOf(day)]}</span>
+                  <div className="flex flex-col">
+                    <span className="text-slate-300 font-bold uppercase tracking-wider">{weekDayNames[idx]}</span>
+                    <span className="text-xs text-slate-500">{dayRecords.length} movimientos</span>
+                  </div>
                 </div>
                 
-                <div className="flex-1 space-y-2 pt-1 overflow-y-auto max-h-[140px] pr-1">
-                  {dayRecords.length === 0 && <p className="text-xs text-slate-500 italic opacity-0 group-hover:opacity-100 transition-opacity">Añadir registros...</p>}
+                {/* Lista de Transacciones Horizontal (scroll) */}
+                <div className="flex-1 flex gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                  {dayRecords.length === 0 && <p className="text-sm text-slate-500 italic flex items-center h-full">Haz clic para añadir un registro...</p>}
                   {dayRecords.map(rec => (
                     <div 
                       key={rec.id} 
-                      className={`px-2 py-1.5 rounded flex flex-col shadow-sm ${
-                        rec.type === 'ingreso' ? 'bg-blue-500/20 text-blue-300 border-l-2 border-blue-500' : 'bg-rose-500/20 text-rose-300 border-l-2 border-rose-500'
+                      className={`min-w-[140px] px-3 py-2 rounded-lg flex flex-col shadow-sm ${
+                        rec.type === 'ingreso' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
                       }`}
                     >
-                      <span className="truncate opacity-80 mb-0.5 text-[10px] uppercase tracking-wider font-bold">{rec.category}</span>
-                      <span className="text-sm font-bold">${rec.amount.toLocaleString()}</span>
+                      <span className="truncate opacity-80 mb-1 text-[11px] uppercase tracking-wider font-bold">{rec.category}</span>
+                      <span className="text-sm font-black">${rec.amount.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Suma Diaria al fondo de la celda */}
-                {(dayIngresos > 0 || dayEgresos > 0) && (
-                  <div className={`mt-3 pt-2 border-t border-brand-border/50 text-right text-base font-black ${dayTotal >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                    {dayTotal >= 0 ? '+' : '-'}${Math.abs(dayTotal).toLocaleString()}
-                  </div>
-                )}
+                {/* Resumen Total a la derecha */}
+                <div className="md:w-32 shrink-0 md:text-right flex justify-between md:block items-center border-t md:border-t-0 border-brand-border/50 pt-3 md:pt-0">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest md:hidden">Balance Neto:</span>
+                  {(dayIngresos > 0 || dayEgresos > 0) ? (
+                    <div className={`text-xl font-black ${dayTotal >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                      {dayTotal >= 0 ? '+' : '-'}${Math.abs(dayTotal).toLocaleString()}
+                    </div>
+                  ) : (
+                    <div className="text-xl font-black text-slate-600">$0</div>
+                  )}
+                </div>
               </div>
             );
           })}
