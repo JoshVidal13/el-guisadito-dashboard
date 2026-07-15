@@ -372,7 +372,7 @@ export default function CalendarPage() {
             <span className={`font-black ${dayBalance >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>Neto: {dayBalance >= 0 ? '+' : '-'}${Math.abs(dayBalance).toLocaleString()}</span>
           </div>
           
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
             {selectedDayRecords.length === 0 ? (
               <p className="text-slate-500 text-sm italic text-center py-4 bg-slate-900/50 rounded-lg">Sin movimientos registrados este día.</p>
             ) : (

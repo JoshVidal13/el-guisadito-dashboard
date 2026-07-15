@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart, Calendar as CalendarIcon, Star, Target, BarChart2, Trash2 } from "lucide-react";
+import { Plus, DollarSign, ArrowDownCircle, ArrowUpCircle, PieChart as PieChartIcon, Calendar as CalendarIcon, Star, Target, BarChart2, Trash2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { getRecords, addRecord, deleteRecord } from "@/actions/finance";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 
 type FinanceRecord = {
   id: string;
@@ -40,7 +41,6 @@ export default function CyclesPage() {
   useEffect(() => {
     async function load() {
       const data = await getRecords();
-      // Map "DD/MM/YYYY" to day number for the calendar
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapped = data.map((r: any) => ({
         id: r.id,
@@ -110,6 +110,21 @@ export default function CyclesPage() {
     biggestExpense = { category: egresosPorCategoria[0].name, amount: egresosPorCategoria[0].total };
   }
 
+  // Prepara datos para las gráficas Recharts
+  const chartData = weekDays.map((day, idx) => {
+    const dayRecords = weekRecords.filter(r => r.date === day);
+    const dayIngresos = dayRecords.filter(r => r.type === "ingreso").reduce((a, b) => a + b.amount, 0);
+    const dayEgresos = dayRecords.filter(r => r.type === "egreso").reduce((a, b) => a + b.amount, 0);
+    const netDay = dayIngresos - dayEgresos;
+    return {
+      name: weekDayNames[idx],
+      day: day,
+      Ingresos: dayIngresos,
+      Gastos: dayEgresos,
+      Neto: netDay
+    };
+  });
+
   const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formAmount || !formCategory) return;
@@ -168,7 +183,7 @@ export default function CyclesPage() {
   const dayBalance = selectedDayRecords.reduce((acc, r) => acc + (r.type === 'ingreso' ? r.amount : -r.amount), 0);
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -227,7 +242,7 @@ export default function CyclesPage() {
 
         <div className="glass p-6 rounded-2xl border border-brand-border relative overflow-hidden group hover:-translate-y-1 transition-transform bg-gradient-to-br from-indigo-900/30 to-purple-900/30">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <PieChart size={64} className="text-indigo-400"/>
+            <PieChartIcon size={64} className="text-indigo-400"/>
           </div>
           <h3 className="text-slate-400 font-medium mb-1 relative z-10">Margen Neta</h3>
           <p className={`text-3xl font-bold relative z-10 ${margin >= 20 ? "text-emerald-400" : margin >= 0 ? "text-yellow-400" : "text-rose-400"}`}>
@@ -236,138 +251,192 @@ export default function CyclesPage() {
         </div>
       </div>
 
+      {/* Grilla Semanal Expandida */}
+      <div className="glass p-6 rounded-2xl border border-brand-border shadow-lg shadow-black/20">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-white">Detalle Operativo Diario</h2>
+          <span className="bg-brand-primary/20 text-brand-primary px-3 py-1 rounded-full text-sm font-bold">
+            {activeWeek.start} al {activeWeek.end} de {activeWeek.month}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-slate-800/50 rounded-xl overflow-hidden border border-brand-border">
+          {/* Headers de la semana */}
+          {weekDayNames.map((name, idx) => (
+            <div key={idx} className="hidden md:block bg-brand-bg/90 py-3 text-center text-sm font-semibold text-slate-400 tracking-wider">
+              {name}
+            </div>
+          ))}
+
+          {/* Celdas de días */}
+          {weekDays.map(day => {
+            const dayRecords = weekRecords.filter(r => r.date === day);
+            
+            const dayIngresos = dayRecords.filter(r => r.type === "ingreso").reduce((a, b) => a + b.amount, 0);
+            const dayEgresos = dayRecords.filter(r => r.type === "egreso").reduce((a, b) => a + b.amount, 0);
+            const dayTotal = dayIngresos - dayEgresos;
+            
+            const bgClass = selectedWeekId === 1 ? "bg-blue-900/10 hover:bg-blue-900/30" : "bg-rose-900/10 hover:bg-rose-900/30";
+
+            return (
+              <div 
+                key={day} 
+                onClick={() => openModalForDate(day)}
+                className={`${bgClass} min-h-[220px] p-3 cursor-pointer transition-all group relative flex flex-col md:border-t-0 border-t border-brand-border/30`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-300 group-hover:bg-brand-primary group-hover:text-brand-bg group-hover:shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-colors">
+                    {day}
+                  </div>
+                  <span className="md:hidden text-slate-400 font-bold uppercase">{weekDayNames[weekDays.indexOf(day)]}</span>
+                </div>
+                
+                <div className="flex-1 space-y-2 pt-1 overflow-y-auto max-h-[140px] pr-1">
+                  {dayRecords.length === 0 && <p className="text-xs text-slate-500 italic opacity-0 group-hover:opacity-100 transition-opacity">Añadir registros...</p>}
+                  {dayRecords.map(rec => (
+                    <div 
+                      key={rec.id} 
+                      className={`px-2 py-1.5 rounded flex flex-col shadow-sm ${
+                        rec.type === 'ingreso' ? 'bg-blue-500/20 text-blue-300 border-l-2 border-blue-500' : 'bg-rose-500/20 text-rose-300 border-l-2 border-rose-500'
+                      }`}
+                    >
+                      <span className="truncate opacity-80 mb-0.5 text-[10px] uppercase tracking-wider font-bold">{rec.category}</span>
+                      <span className="text-sm font-bold">${rec.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Suma Diaria al fondo de la celda */}
+                {(dayIngresos > 0 || dayEgresos > 0) && (
+                  <div className={`mt-3 pt-2 border-t border-brand-border/50 text-right text-base font-black ${dayTotal >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                    {dayTotal >= 0 ? '+' : '-'}${Math.abs(dayTotal).toLocaleString()}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Analytics Visuals (Charts) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Gráfico Comparativo: Ingresos vs Gastos */}
+        <div className="glass p-6 rounded-2xl border border-brand-border shadow-lg shadow-black/20">
+          <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <BarChart2 className="text-blue-400" size={20} /> Flujo Diario (Ingresos vs Gastos)
+          </h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
+                  itemStyle={{ fontWeight: 'bold' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }}/>
+                <Bar dataKey="Ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="Gastos" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gráfico de Tendencia Neta */}
+        <div className="glass p-6 rounded-2xl border border-brand-border shadow-lg shadow-black/20">
+          <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <TrendingUp className="text-emerald-400" size={20} /> Tendencia de Rentabilidad (Neto)
+          </h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorNeto" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
+                />
+                <Area type="monotone" dataKey="Neto" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorNeto)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Distribuciones en Barras/Pie y Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Grilla de Días */}
-        <div className="lg:col-span-2 glass p-6 rounded-2xl border border-brand-border shadow-lg shadow-black/20">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Detalle Semanal</h2>
-            <span className="bg-brand-primary/20 text-brand-primary px-3 py-1 rounded-full text-sm font-bold">
-              {activeWeek.start} al {activeWeek.end} de {activeWeek.month}
-            </span>
+        <div className="glass p-6 rounded-2xl border border-brand-border shadow-lg">
+          <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-6 flex items-center gap-2">
+            <Star size={16} className="text-yellow-500"/> Desempeño Clave
+          </h3>
+          <div className="space-y-6">
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+              <p className="text-xs text-slate-400 mb-1">Mejor Día de Ventas</p>
+              <p className="font-bold text-xl text-emerald-400">{bestDay.date !== "N/A" ? `${bestDay.date}` : "Sin datos"}</p>
+              {bestDay.date !== "N/A" && <p className="text-sm font-semibold text-emerald-500 mt-1">${bestDay.amount.toLocaleString()}</p>}
+            </div>
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+              <p className="text-xs text-slate-400 mb-1">Mayor Gasto Registrado</p>
+              <p className="font-bold text-xl text-rose-400">{biggestExpense.category !== "N/A" ? `${biggestExpense.category}` : "Sin datos"}</p>
+              {biggestExpense.category !== "N/A" && <p className="text-sm font-semibold text-rose-500 mt-1">${biggestExpense.amount.toLocaleString()}</p>}
+            </div>
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+              <p className="text-xs text-slate-400 mb-1">Volumen Transaccional</p>
+              <p className="font-bold text-xl text-blue-400">{weekRecords.length} movimientos</p>
+            </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-7 gap-px bg-slate-800/50 rounded-xl overflow-hidden border border-brand-border">
-            {/* Headers de la semana */}
-            {weekDayNames.map((name, idx) => (
-              <div key={idx} className="bg-brand-bg/90 py-3 text-center text-sm font-semibold text-slate-400 tracking-wider">
-                {name}
+        <div className="glass p-6 rounded-2xl border border-brand-border shadow-lg">
+          <h3 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+            <Target size={16}/> Composición de Ingresos
+          </h3>
+          <div className="space-y-5">
+            {ingresosPorCategoria.length === 0 && <p className="text-slate-500 text-sm italic">Sin datos</p>}
+            {ingresosPorCategoria.map(cat => (
+              <div key={cat.name} className="group">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-slate-300 font-semibold">{cat.name}</span>
+                  <span className="font-bold text-blue-400">${cat.total.toLocaleString()} ({(cat.total / totalIngresos * 100).toFixed(0)}%)</span>
+                </div>
+                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div className="bg-blue-500 h-full rounded-full transition-all duration-1000" style={{ width: `${(cat.total / totalIngresos) * 100}%` }}></div>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
 
-            {/* Celdas de días */}
-            {weekDays.map(day => {
-              const dayRecords = weekRecords.filter(r => r.date === day);
-              
-              const dayIngresos = dayRecords.filter(r => r.type === "ingreso").reduce((a, b) => a + b.amount, 0);
-              const dayEgresos = dayRecords.filter(r => r.type === "egreso").reduce((a, b) => a + b.amount, 0);
-              const dayTotal = dayIngresos - dayEgresos;
-              
-              const bgClass = selectedWeekId === 1 ? "bg-blue-900/10 hover:bg-blue-900/30" : "bg-rose-900/10 hover:bg-rose-900/30";
-
-              return (
-                <div 
-                  key={day} 
-                  onClick={() => openModalForDate(day)}
-                  className={`${bgClass} min-h-[200px] p-2 cursor-pointer transition-all group relative flex flex-col`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full text-slate-300 group-hover:bg-brand-primary group-hover:text-brand-bg transition-colors">
-                      {day}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 space-y-2 pt-1 overflow-y-auto max-h-[120px] pr-1">
-                    {dayRecords.map(rec => (
-                      <div 
-                        key={rec.id} 
-                        className={`px-2 py-1.5 rounded flex flex-col shadow-sm ${
-                          rec.type === 'ingreso' ? 'bg-blue-500/20 text-blue-300 border-l-2 border-blue-500' : 'bg-rose-500/20 text-rose-300 border-l-2 border-rose-500'
-                        }`}
-                      >
-                        <span className="truncate opacity-80 mb-0.5 text-[9px] uppercase tracking-wider font-bold">{rec.category}</span>
-                        <span className="text-xs font-bold">${rec.amount.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Suma Diaria al fondo de la celda */}
-                  {(dayIngresos > 0 || dayEgresos > 0) && (
-                    <div className={`mt-2 pt-2 border-t border-brand-border/50 text-right text-sm font-black ${dayTotal >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                      {dayTotal >= 0 ? '+' : '-'}${Math.abs(dayTotal).toLocaleString()}
-                    </div>
-                  )}
+        <div className="glass p-6 rounded-2xl border border-brand-border shadow-lg">
+          <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+            <BarChart2 size={16}/> Distribución de Gastos
+          </h3>
+          <div className="space-y-5">
+            {egresosPorCategoria.length === 0 && <p className="text-slate-500 text-sm italic">Sin datos</p>}
+            {egresosPorCategoria.map(cat => (
+              <div key={cat.name} className="group">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-slate-300 font-semibold">{cat.name}</span>
+                  <span className="font-bold text-rose-400">${cat.total.toLocaleString()} ({(cat.total / totalEgresos * 100).toFixed(0)}%)</span>
                 </div>
-              );
-            })}
+                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div className="bg-rose-500 h-full rounded-full transition-all duration-1000" style={{ width: `${(cat.total / totalEgresos) * 100}%` }}></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Panel de Análisis Lateral */}
-        <div className="glass p-6 rounded-2xl border border-brand-border flex flex-col gap-6 shadow-lg shadow-black/20 overflow-y-auto max-h-[800px]">
-          <div className="flex items-center gap-2 pb-4 border-b border-brand-border">
-            <PieChart className="text-brand-primary" size={24} />
-            <h2 className="text-xl font-bold text-white">Análisis de la Semana</h2>
-          </div>
-          
-          <div className="bg-slate-900/80 p-5 rounded-xl border border-brand-border space-y-4 shadow-inner">
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><Star size={16} className="text-yellow-500"/> Insights Premium</h3>
-            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-              <p className="text-xs text-slate-400">Mejor Día de Ventas</p>
-              <p className="font-semibold text-emerald-400 text-right">{bestDay.date !== "N/A" ? `${bestDay.date}\n($${bestDay.amount.toLocaleString()})` : "Sin datos"}</p>
-            </div>
-            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-              <p className="text-xs text-slate-400">Mayor Fuga (Gasto)</p>
-              <p className="font-semibold text-rose-400 text-right">{biggestExpense.category !== "N/A" ? `${biggestExpense.category}\n($${biggestExpense.amount.toLocaleString()})` : "Sin datos"}</p>
-            </div>
-            <div className="flex justify-between items-center">
-              <p className="text-xs text-slate-400">Volumen Operativo</p>
-              <p className="font-semibold text-blue-400 text-right">{weekRecords.length} transacciones</p>
-            </div>
-          </div>
-
-          {ingresosPorCategoria.length > 0 && (
-            <div>
-              <h3 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Target size={16}/> Distribución de Ingresos</h3>
-              <div className="space-y-4">
-                {ingresosPorCategoria.map(cat => (
-                  <div key={cat.name} className="group">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-slate-300 group-hover:text-white transition-colors">{cat.name}</span>
-                      <span className="font-bold text-blue-300 group-hover:text-blue-200 transition-colors">${cat.total.toLocaleString()}</span>
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-blue-500 h-1.5 rounded-full group-hover:bg-blue-400 transition-colors" style={{ width: `${(cat.total / totalIngresos) * 100}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {egresosPorCategoria.length > 0 && (
-            <div>
-              <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-4 flex items-center gap-2"><BarChart2 size={16}/> Distribución de Gastos</h3>
-              <div className="space-y-4">
-                {egresosPorCategoria.map(cat => (
-                  <div key={cat.name} className="group">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-slate-300 group-hover:text-white transition-colors">{cat.name}</span>
-                      <span className="font-bold text-rose-300 group-hover:text-rose-200 transition-colors">${cat.total.toLocaleString()}</span>
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-rose-500 h-1.5 rounded-full group-hover:bg-rose-400 transition-colors" style={{ width: `${(cat.total / totalEgresos) * 100}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {ingresosPorCategoria.length === 0 && egresosPorCategoria.length === 0 && (
-             <p className="text-slate-500 text-sm text-center italic mt-4">Sin datos esta semana.</p>
-          )}
-        </div>
       </div>
 
       {/* Modal del Día */}
@@ -380,7 +449,7 @@ export default function CyclesPage() {
             <span className={`font-black ${dayBalance >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>Neto: {dayBalance >= 0 ? '+' : '-'}${Math.abs(dayBalance).toLocaleString()}</span>
           </div>
           
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
             {selectedDayRecords.length === 0 ? (
               <p className="text-slate-500 text-sm italic text-center py-4 bg-slate-900/50 rounded-lg">Sin movimientos registrados este día.</p>
             ) : (
@@ -432,7 +501,7 @@ export default function CyclesPage() {
                   required
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
-                  className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-primary transition-colors appearance-none cursor-pointer"
+                  className="w-full bg-slate-900 border border-brand-border rounded-lg p-3 text-white focus:outline-none focus:border-brand-primary transition-colors appearance-none cursor-pointer"
                 >
                   {(formType === "ingreso" ? categoriasIngreso : categoriasEgreso).map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -449,7 +518,7 @@ export default function CyclesPage() {
                   step="0.01"
                   value={formAmount}
                   onChange={(e) => setFormAmount(e.target.value)}
-                  className="w-full bg-slate-900 border border-brand-border rounded-lg p-2.5 font-bold text-white placeholder-slate-600 focus:outline-none focus:border-brand-primary transition-colors"
+                  className="w-full bg-slate-900 border border-brand-border rounded-lg p-3 font-bold text-white placeholder-slate-600 focus:outline-none focus:border-brand-primary transition-colors"
                   placeholder="0.00"
                 />
               </div>
