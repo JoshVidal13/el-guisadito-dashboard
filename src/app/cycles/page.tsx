@@ -288,13 +288,13 @@ export default function CyclesPage() {
                   </div>
                 </div>
                 
-                {/* Lista de Transacciones Horizontal (scroll) */}
-                <div className="flex-1 flex gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                {/* Lista de Transacciones (Wrap en lugar de Scroll) */}
+                <div className="flex-1 flex flex-wrap gap-3 pb-2 md:pb-0">
                   {dayRecords.length === 0 && <p className="text-sm text-slate-500 italic flex items-center h-full">Haz clic para añadir un registro...</p>}
                   {dayRecords.map(rec => (
                     <div 
                       key={rec.id} 
-                      className={`min-w-[140px] px-3 py-2 rounded-lg flex flex-col shadow-sm ${
+                      className={`min-w-[120px] max-w-[180px] px-3 py-2 rounded-lg flex flex-col shadow-sm ${
                         rec.type === 'ingreso' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
                       }`}
                     >
